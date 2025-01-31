@@ -1,4 +1,3 @@
-
 # クイックアクセス用のハッシュテーブル
 $global:QuickAccess = @{}
 
@@ -91,7 +90,7 @@ function list-go {
     }
 }
 
-# ユーザーに選択肢を表示して選ばせる（上下矢印で選択）
+# ユーザーに選択肢を表示して選ばせる（上下矢印 & Vim風の "j" / "k" に対応）
 function Show-SelectionMenu {
     param (
         [array]$choices
@@ -101,33 +100,34 @@ function Show-SelectionMenu {
     $choicesCount = $choices.Count
     $cursorTop = [Console]::CursorTop # 現在のカーソル位置
 
-    # 初期表示（選択肢の表示）
+    # 初期表示
     Show-Choices -choices $choices -selectionIndex $selectionIndex
 
     while ($true) {
         # ユーザー入力の受け取り
-        $key = [System.Console]::ReadKey($true).Key
-        
-        if ($key -eq 'UpArrow') {
-            # 上矢印
+        $key = [System.Console]::ReadKey($true)
+
+        if ($key.Key -eq 'UpArrow' -or $key.KeyChar -eq 'k') {
+            # 上移動 (↑キー または "k")
             $selectionIndex = ($selectionIndex - 1 + $choicesCount) % $choicesCount
             Update-ChoicesDisplay -choices $choices -selectionIndex $selectionIndex -cursorTop $cursorTop
         }
-        elseif ($key -eq 'DownArrow') {
-            # 下矢印
+        elseif ($key.Key -eq 'DownArrow' -or $key.KeyChar -eq 'j') {
+            # 下移動 (↓キー または "j")
             $selectionIndex = ($selectionIndex + 1) % $choicesCount
             Update-ChoicesDisplay -choices $choices -selectionIndex $selectionIndex -cursorTop $cursorTop
         }
-        elseif ($key -eq 'Enter') {
+        elseif ($key.Key -eq 'Enter') {
             # Enterで選択確定
             return $choices[$selectionIndex]
         }
-        elseif ($key -eq 'Escape') {
+        elseif ($key.Key -eq 'Escape') {
             # Escapeでキャンセル
             return $null
         }
     }
 }
+
 
 # 選択肢を表示する
 function Show-Choices {
