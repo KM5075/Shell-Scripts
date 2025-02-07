@@ -129,40 +129,45 @@ function Show-SelectionMenu {
 }
 
 
-# 選択肢を表示する
+# 選択肢を表示する（現在の選択位置を強調）
 function Show-Choices {
     param (
         [array]$choices,
         [int]$selectionIndex
     )
-    
-    # 新しい選択肢の表示
-    $choices | ForEach-Object -Begin { $i = 0 } {
-        $prefix = if ($i -eq $selectionIndex) { ">>" } else { "  " }
-        Write-Host "$prefix $($_.Key) -> $($_.Value)"
-        $i++
+
+    $cursorTop = [Console]::CursorTop # 現在のカーソル位置を取得
+
+    for ($i = 0; $i -lt $choices.Count; $i++) {
+        if ($i -eq $selectionIndex) {
+            Write-Host ("  " + ">>" + " " + $choices[$i]) -ForegroundColor Red
+        }
+        else {
+            Write-Host ("     " + $choices[$i]) -ForegroundColor Blue
+        }
     }
+
+    return $cursorTop
 }
 
-# 選択肢を更新する
+# カーソルを適切な位置に戻し、リストを更新する
 function Update-ChoicesDisplay {
     param (
         [array]$choices,
         [int]$selectionIndex,
         [int]$cursorTop
     )
-    
-    # カーソルを移動
-    [Console]::SetCursorPosition(0, $cursorTop)
-    
-    # 画面の消去（選択肢の行だけ消去）
-    $numChoices = $choices.Count
-    for ($i = 0; $i -lt $numChoices; $i++) {
-        Write-Host "`r$([string]::new(' ', [Console]::WindowWidth))"
-    }
 
-    # 新しい選択肢の表示
-    Show-Choices -choices $choices -selectionIndex $selectionIndex
+    [Console]::SetCursorPosition(0, $cursorTop) # カーソル位置をリセット
+
+    for ($i = 0; $i -lt $choices.Count; $i++) {
+        if ($i -eq $selectionIndex) {
+            Write-Host ("  " + ">>" + " " + $choices[$i]) -ForegroundColor Red
+        }
+        else {
+            Write-Host ("     " + $choices[$i]) -ForegroundColor Blue
+        }
+    }
 }
 
 # 初回実行時に設定を読み込む
