@@ -49,6 +49,22 @@ function add-go {
     Write-Host "登録完了: '$key' -> '$path'" -ForegroundColor Green
 }
 
+# クイックアクセスから削除
+function remove-go {
+    param (
+        [string]$key
+    )
+
+    if ($global:QuickAccess.ContainsKey($key)) {
+        $global:QuickAccess.Remove($key)
+        $global:QuickAccess | ConvertTo-Json -Depth 10 | Set-Content $QuickAccessFile
+        Write-Host "削除完了: '$key'" -ForegroundColor Yellow
+    }
+    else {
+        Write-Host "エイリアス '$key' は登録されていません。" -ForegroundColor Red
+    }
+}
+
 # クイックアクセスで移動
 function go {
     param (
