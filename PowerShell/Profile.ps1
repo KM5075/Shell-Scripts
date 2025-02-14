@@ -5,7 +5,7 @@ $global:QuickAccess = @{}
 $QuickAccessFile = "$env:USERPROFILE\quickaccess.json"
 
 # 設定を読み込む
-function Load-QuickAccess {
+function go-Load-QuickAccess {
     if (Test-Path $QuickAccessFile) {
         try {
             $jsonData = Get-Content -Raw $QuickAccessFile | ConvertFrom-Json
@@ -33,7 +33,8 @@ function Save-QuickAccess {
 }
 
 # クイックアクセスに登録
-function add-go {
+function go-add {
+
     param (
         [string]$key,
         [string]$path
@@ -50,7 +51,7 @@ function add-go {
 }
 
 # クイックアクセスから削除
-function remove-go {
+function go-remove {
     param (
         [string]$key
     )
@@ -95,7 +96,7 @@ function go {
 }
 
 # 登録済みリスト表示
-function list-go {
+function go-list {
     if ($global:QuickAccess.Count -eq 0) {
         Write-Host "登録されているエイリアスはありません。" -ForegroundColor Yellow
     }
@@ -187,4 +188,4 @@ function Update-ChoicesDisplay {
 }
 
 # 初回実行時に設定を読み込む
-Load-QuickAccess
+go-Load-QuickAccess
