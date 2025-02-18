@@ -32,12 +32,11 @@ function Save-QuickAccess {
     }
 }
 
-# クイックアクセスに登録
+# クイックアクセスに登録（パス未指定ならカレントディレクトリ）
 function go-add {
-
     param (
         [string]$key,
-        [string]$path
+        [string]$path = $PWD.Path  # デフォルト値にカレントパスを設定
     )
 
     if (-not (Test-Path $path)) {
@@ -46,7 +45,7 @@ function go-add {
     }
 
     $global:QuickAccess[$key] = $path
-    Save-QuickAccess
+    $global:QuickAccess | ConvertTo-Json -Depth 10 | Set-Content $QuickAccessFile
     Write-Host "登録完了: '$key' -> '$path'" -ForegroundColor Green
 }
 
