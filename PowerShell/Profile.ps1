@@ -71,26 +71,55 @@ function go {
         [string]$key
     )
 
-    if ($key) {
-        # 引数が指定されている場合、そのパスに移動
-        if ($global:QuickAccess.ContainsKey($key)) {
-            Set-Location -Path $global:QuickAccess[$key]
+    if (-not $key) {
+        $choices = $global:QuickAccess.Keys | Sort-Object
+        $selectedIndex = 0
+
+        function Clear-ChoicesDisplay {
+            $count = $choices.Count
+            for ($i = 0; $i -lt $count; $i++) {
+                [System.Console]::SetCursorPosition(0, [System.Console]::CursorTop - 1)
+                [System.Console]::Write("".PadRight([System.Console]::WindowWidth))
+            }
+
+            $newTop = [Math]::Max(0, [System.Console]::CursorTop - $count + 1)
+            [System.Console]::SetCursorPosition(0, $newTop)
         }
-        else {
-            Write-Host "エイリアス '$key' は登録されていません。" -ForegroundColor Red
+
+        function Display-Choices {
+            Clear-ChoicesDisplay
+            for ($i = 0; $i -lt $choices.Count; $i++) {
+                $name = $choices[$i]
+                $path = $global:QuickAccess[$name]
+                $prefix = if ($i -eq $selectedIndex) { "`e[31m>>`e[0m " } else { "   " }
+                $colorName = "`e[34m$name`e[0m"
+                Write-Host "${prefix}${colorName}:${path}"
+            }
+        }
+
+        Display-Choices
+
+        while ($true) {
+            $keyInfo = [System.Console]::ReadKey($true)
+            switch ($keyInfo.Key) {
+                'UpArrow' { if ($selectedIndex -gt 0) { $selectedIndex-- }; Display-Choices }
+                'DownArrow' { if ($selectedIndex -lt ($choices.Count - 1)) { $selectedIndex++ }; Display-Choices }
+                'J' { if ($selectedIndex -lt ($choices.Count - 1)) { $selectedIndex++ }; Display-Choices }
+                'K' { if ($selectedIndex -gt 0) { $selectedIndex-- }; Display-Choices }
+                'Enter' {
+                    $selected = $choices[$selectedIndex]
+                    Set-Location -Path $global:QuickAccess[$selected]
+                    break
+                }
+                'Escape' { break }
+            }
         }
     }
+    elseif ($global:QuickAccess.ContainsKey($key)) {
+        Set-Location -Path $global:QuickAccess[$key]
+    }
     else {
-        # 引数が指定されていない場合、登録済みのキーとパスを表示し、選択
-        $choices = $global:QuickAccess.GetEnumerator() | Select-Object Key, Value
-        $selection = Show-SelectionMenu -choices $choices
-        
-        if ($selection) {
-            Set-Location -Path $selection.Value
-        }
-        else {
-            Write-Host "選択がキャンセルされました。" -ForegroundColor Yellow
-        }
+        Write-Host "エイリアス '$key' は登録されていません。" -ForegroundColor Red
     }
 }
 
@@ -188,3 +217,6 @@ function Update-ChoicesDisplay {
 
 # 初回実行時に設定を読み込む
 go-Load-QuickAccess
+
+# OhMyPoshのプロファイルを読み込む
+oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH\wholespace.omp.json" | Invoke-Expression
