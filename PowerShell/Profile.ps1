@@ -11,8 +11,9 @@ function go-Load-QuickAccess {
             $jsonData = Get-Content -Raw $QuickAccessFile | ConvertFrom-Json
             if ($jsonData -is [PSCustomObject]) {
                 $global:QuickAccess = @{}
-                $jsonData.PSObject.Properties | ForEach-Object {
-                    $global:QuickAccess[$_.Name] = $_.Value
+                $sortedEntries = $jsonData.PSObject.Properties | Sort-Object Name
+                foreach ($entry in $sortedEntries) {
+                    $global:QuickAccess[$entry.Name] = $entry.Value
                 }
             }
         }
