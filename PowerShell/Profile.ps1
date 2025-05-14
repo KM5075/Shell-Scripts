@@ -77,18 +77,20 @@ function go {
         $selectedIndex = 0
 
         function Clear-ChoicesDisplay {
+            param (
+                [int]$originalCursorTop
+            )
             $count = $choices.Count
+            [System.Console]::SetCursorPosition(0, $originalCursorTop) # 元のカーソル位置に戻す
             for ($i = 0; $i -lt $count; $i++) {
-                [System.Console]::SetCursorPosition(0, [System.Console]::CursorTop - 1)
-                [System.Console]::Write("".PadRight([System.Console]::WindowWidth))
+                Write-Host ("".PadRight([System.Console]::WindowWidth)) # 空行で上書き
             }
-
-            $newTop = [Math]::Max(0, [System.Console]::CursorTop - $count + 1)
-            [System.Console]::SetCursorPosition(0, $newTop)
+            [System.Console]::SetCursorPosition(0, $originalCursorTop) # 再度カーソル位置をリセット
         }
 
         function Display-Choices {
-            Clear-ChoicesDisplay
+            $originalCursorTop = [System.Console]::CursorTop # 現在のカーソル位置を取得
+            Clear-ChoicesDisplay -originalCursorTop $originalCursorTop
             for ($i = 0; $i -lt $choices.Count; $i++) {
                 $name = $choices[$i]
                 $path = $global:QuickAccess[$name]
@@ -110,7 +112,7 @@ function go {
                 'Enter' {
                     $selected = $choices[$selectedIndex]
                     Set-Location -Path $global:QuickAccess[$selected]
-                    break
+                    return
                 }
                 'Escape' { break }
             }
