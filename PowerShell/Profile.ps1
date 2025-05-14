@@ -76,39 +76,39 @@ function go {
         $choices = $global:QuickAccess.Keys | Sort-Object
         $selectedIndex = 0
 
-        function Clear-ChoicesDisplay {
-            param (
-                [int]$originalCursorTop
-            )
-            $count = $choices.Count
-            [System.Console]::SetCursorPosition(0, $originalCursorTop) # 元のカーソル位置に戻す
-            for ($i = 0; $i -lt $count; $i++) {
-                Write-Host ("".PadRight([System.Console]::WindowWidth)) # 空行で上書き
-            }
-            [System.Console]::SetCursorPosition(0, $originalCursorTop) # 再度カーソル位置をリセット
-        }
+        # 最初のカーソル位置を取得
+        $fixedCursorTop = [System.Console]::CursorTop
 
-        function Display-Choices {
-            $originalCursorTop = [System.Console]::CursorTop # 現在のカーソル位置を取得
-            Clear-ChoicesDisplay -originalCursorTop $originalCursorTop
-            for ($i = 0; $i -lt $choices.Count; $i++) {
-                $name = $choices[$i]
-                $path = $global:QuickAccess[$name]
-                $prefix = if ($i -eq $selectedIndex) { "`e[31m>>`e[0m " } else { "   " }
-                $colorName = "`e[34m$name`e[0m"
-                Write-Host "${prefix}${colorName}:${path}"
-            }
-        }
-
-        Display-Choices
+        # 初期表示
+        Display-Choices -fixedCursorTop $fixedCursorTop -choices $choices -selectedIndex $selectedIndex
 
         while ($true) {
             $keyInfo = [System.Console]::ReadKey($true)
             switch ($keyInfo.Key) {
-                'UpArrow' { if ($selectedIndex -gt 0) { $selectedIndex-- }; Display-Choices }
-                'DownArrow' { if ($selectedIndex -lt ($choices.Count - 1)) { $selectedIndex++ }; Display-Choices }
-                'J' { if ($selectedIndex -lt ($choices.Count - 1)) { $selectedIndex++ }; Display-Choices }
-                'K' { if ($selectedIndex -gt 0) { $selectedIndex-- }; Display-Choices }
+                'UpArrow' { 
+                    if ($selectedIndex -gt 0) { 
+                        $selectedIndex-- 
+                    }
+                    Display-Choices -fixedCursorTop $fixedCursorTop -choices $choices -selectedIndex $selectedIndex
+                }
+                'DownArrow' { 
+                    if ($selectedIndex -lt ($choices.Count - 1)) { 
+                        $selectedIndex++ 
+                    }
+                    Display-Choices -fixedCursorTop $fixedCursorTop -choices $choices -selectedIndex $selectedIndex
+                }
+                'J' { 
+                    if ($selectedIndex -lt ($choices.Count - 1)) { 
+                        $selectedIndex++ 
+                    }
+                    Display-Choices -fixedCursorTop $fixedCursorTop -choices $choices -selectedIndex $selectedIndex
+                }
+                'K' { 
+                    if ($selectedIndex -gt 0) { 
+                        $selectedIndex-- 
+                    }
+                    Display-Choices -fixedCursorTop $fixedCursorTop -choices $choices -selectedIndex $selectedIndex
+                }
                 'Enter' {
                     $selected = $choices[$selectedIndex]
                     Set-Location -Path $global:QuickAccess[$selected]
@@ -213,6 +213,26 @@ function Update-ChoicesDisplay {
             Write-Host ("  " + ">>" + " " + $choices[$i]) -ForegroundColor Red
         }
         else {
+            Write-Host ("     " + $choices[$i]) -ForegroundColor Blue
+        }
+    }
+}
+
+function Display-Choices {
+    param (
+        [int]$fixedCursorTop, # 最初に取得したカーソル位置
+        [array]$choices,      # 選択肢のリスト
+        [int]$selectedIndex   # 現在の選択位置
+    )
+
+    # カーソル位置を固定
+    [System.Console]::SetCursorPosition(0, $fixedCursorTop)
+
+    # リストを再描画
+    for ($i = 0; $i -lt $choices.Count; $i++) {
+        if ($i -eq $selectedIndex) {
+            Write-Host ("  >> " + $choices[$i]) -ForegroundColor Red
+        } else {
             Write-Host ("     " + $choices[$i]) -ForegroundColor Blue
         }
     }
