@@ -2,7 +2,7 @@
 
 # 設定
 DEV_BRANCH="temp/test"  # マージ対象のブランチ名（ワイルドカードも可）
-OUTPUT_DIR="./merged-files"
+OUTPUT_ROOT_DIR="./merged-files"
 
 # 現在のブランチが dev-machine であるか確認
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -13,7 +13,6 @@ if [ "$CURRENT_BRANCH" != "$DEV_BRANCH" ]; then
 fi
 
 # 前回のマージでマージされたブランチを取得
-# 直前のマージコミットの親を使う
 MERGE_COMMIT=$(git log -1 --pretty=%H)
 PARENTS=($(git log -1 --pretty=%P))
 
@@ -34,8 +33,20 @@ echo "マージ開始点: $BASE_COMMIT"
 git diff --name-status "$BASE_COMMIT"..."$FEATURE_COMMIT" > /tmp/changed_files.txt
 grep -E '^[AM]' /tmp/changed_files.txt | cut -f2 > /tmp/changed_file_paths.txt
 
-# コピー
+# マージ元ブランチ名を取得（厳密ではないが、参考情報としてコミットメッセージから抽出）
+MERGED_BRANCH_NAME=$(git log -1 --pretty=%B | grep -oE "from [^ ]+" | awk '{print $2}' | sed 's|refs/heads/||' | sed 's|/|_|g')
+if [ -z "$MERGED_BRANCH_NAME" ]; then
+    MERGED_BRANCH_NAME="unknown-branch"
+fi
+
+# タイムスタンプを生成
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+# 出力ディレクトリを作成
+OUTPUT_DIR="$OUTPUT_ROOT_DIR/${TIMESTAMP}_${MERGED_BRANCH_NAME}"
 mkdir -p "$OUTPUT_DIR"
+
+# ファイルをコピー
 while read file; do
     mkdir -p "$OUTPUT_DIR/$(dirname "$file")"
     cp "$file" "$OUTPUT_DIR/$file"
